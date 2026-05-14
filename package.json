@@ -1,0 +1,22 @@
+{
+  "name": "drive-luxury-wheels",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Luxury car dealership platform — Next.js frontend + Express API (npm workspaces).",
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "concurrently -n frontend,backend -c cyan,magenta \"npm run dev -w frontend\" \"npm run dev -w backend\"",
+    "build": "npm run build -w frontend && npm run build -w backend",
+    "start": "concurrently -n frontend,backend -c cyan,magenta \"npm run start -w frontend\" \"npm run start -w backend\"",
+    "lint": "npm run lint -w frontend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
