@@ -1,6 +1,13 @@
 // =============================================================================
 // DRIVE LUXURY WHEELS — Prisma schema (PostgreSQL)
 // =============================================================================
+// PRODUCTION (Neon / Supabase):
+// - Prefer the provider’s **pooled** connection string for `DATABASE_URL` (PgBouncer / pooler),
+//   especially on Render, to avoid exhausting connections.
+// - Neon: optionally add a **direct** (non-pooler) URL as `DIRECT_DATABASE_URL` and set
+//   `directUrl = env("DIRECT_DATABASE_URL")` on `datasource db` if you split migrate vs runtime;
+//   for a single URL, keep only `url` as below.
+//
 // After cloning:
 // 1) Copy `.env.example` to `.env` and set DATABASE_URL (Supabase/Neon/local).
 // 2) Run: npx prisma migrate dev --name init

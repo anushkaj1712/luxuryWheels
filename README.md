@@ -6,10 +6,12 @@ Premium luxury car dealership platform: **Next.js** (frontend) and **Express + P
 
 ```
 drive-luxury-wheels/
-├── frontend/          # Next.js 15, TypeScript, Tailwind, Framer Motion, ShadCN-style UI
-├── backend/           # Express API, Prisma, PostgreSQL, JWT, uploads, email
-├── package.json       # Workspaces + scripts (concurrently)
-├── .env.example       # Copy to `.env` at repo root — one place for local variables
+├── frontend/            # Next.js 15 app (deploy root on Vercel)
+│   └── vercel.json      # Vercel defaults
+├── backend/             # Express API (deploy root on Render)
+├── package.json         # Workspaces + scripts (concurrently)
+├── render.yaml          # Optional Render blueprint (API service)
+├── .env.example         # Copy to `.env` at repo root
 └── README.md
 ```
 
@@ -47,7 +49,7 @@ npm install
    | `JWT_SECRET` | Long random string (16+ characters; required) |
    | `NEXT_PUBLIC_API_URL` | Must match the API, e.g. `http://localhost:5000/api` |
    | `PORT` | API port (default **5000**) |
-   | `CLIENT_URL` | Browser origin for CORS (default `http://localhost:3002`) |
+   | `CLIENT_URL` | Browser origin for CORS (local default `http://localhost:3000`; production must be your real `https://` Vercel URL — see deployment section) |
 
 3. Generate the Prisma client and apply migrations (first time / after schema changes):
 
@@ -64,7 +66,7 @@ npm run dev
 
 This starts:
 
-- **Frontend:** [http://localhost:3002](http://localhost:3002) (Next.js)
+- **Frontend:** [http://localhost:3000](http://localhost:3000) (Next.js)
 - **Backend:** [http://localhost:5000](http://localhost:5000) (Express, routes under `/api`)
 
 You do **not** need two terminals for local development.
@@ -77,13 +79,72 @@ npm run build
 
 Builds the frontend (`next build`) and compiles the backend TypeScript to `backend/dist/`.
 
+For hosted builds that must run Prisma generate first:
+
+```bash
+npm run build:production
+```
+
+## Production deployment (Vercel + Render + Neon/Supabase)
+
+This stack deploys **without Docker/Kubernetes**: Next.js on Vercel, Express on Render, PostgreSQL on Neon or Supabase.
+
+### Database
+
+1. Create a Neon or Supabase project; copy the **PostgreSQL** URL.
+2. Prefer a **pooled** connection string for `DATABASE_URL` on Render.
+3. Apply migrations (from your laptop or a Render shell):
+
+   ```bash
+   npm run prisma:migrate -w backend
+   ```
+
+### Render (API)
+
+1. **Web Service** → connect this repository.
+2. **Root Directory:** `backend`
+3. **Build:** `npm install && npx prisma generate && npm run build`
+4. **Start:** `npm start`
+5. **Health check:** `/api/health/live` (see `render.yaml` for a blueprint).
+
+**Required on Render:** `DATABASE_URL`, `JWT_SECRET`, `CLIENT_URL` (public `https://` Vercel origin — **not** localhost). Optional: `CORS_ORIGINS` (comma-separated preview URLs), `LOG_LEVEL`, `API_REQUEST_TIMEOUT_MS`, Cloudinary, SMTP, payment keys (see root `.env.example`).
+
+### Vercel (frontend)
+
+1. Import the same repository.
+2. **Root Directory:** `frontend`
+3. Set **`NEXT_PUBLIC_API_URL`** to your Render URL including `/api`, and **`NEXT_PUBLIC_SITE_URL`** to your canonical `https://` domain (Vercel also provides `VERCEL_URL` for server-side fallbacks).
+
+### CORS
+
+- `CLIENT_URL` must match the browser origin exactly (scheme + host + port).
+- Local `localhost` / `127.0.0.1:3000` are allowed only when `NODE_ENV !== "production"` (`backend/src/config/cors.ts`).
+
+### Health endpoints
+
+| Route | Purpose |
+|-------|---------|
+| `GET /api/health` | Process summary |
+| `GET /api/health/live` | Liveness (no DB) |
+| `GET /api/health/ready` | DB readiness (`SELECT 1`) |
+
+### Deployment troubleshooting
+
+| Symptom | Likely cause | Fix |
+|--------|----------------|-----|
+| API exits on boot in production | `CLIENT_URL` is loopback | Set `CLIENT_URL` to your deployed `https://` frontend (`backend/src/config/env.ts`). |
+| `/api/health/ready` returns 503 | Database URL / firewall / SSL | Verify `DATABASE_URL`; allow Render outbound IPs if your DB is IP-restricted. |
+| Vercel build error about env | Missing `NEXT_PUBLIC_*` | Set `NEXT_PUBLIC_SITE_URL` and `NEXT_PUBLIC_API_URL` for Production (Preview as needed). |
+| Browser CORS errors | Origin not allow-listed | Fix `CLIENT_URL` / `CORS_ORIGINS` on Render; redeploy API. |
+| HTTP 408 from API | Slow handler vs timeout | Raise `API_REQUEST_TIMEOUT_MS` or optimize the route. |
+
 ## Production start
 
 ```bash
 npm start
 ```
 
-Runs `next start` on port **3002** and the compiled API on **PORT** from `.env` (default **5000**). Set the same variables on your host (e.g. Vercel + Render) as in production `.env`.
+Runs `next start` on port **3000** and the compiled API on **PORT** from `.env` (default **5000**). Set the same variables on your host (e.g. Vercel + Render) as in production `.env`.
 
 ## Suggested deployment (simple)
 
@@ -103,13 +164,13 @@ Set `NEXT_PUBLIC_API_URL` on the frontend to your public API URL (including `/ap
 | `npm run dev` | Frontend + backend together |
 | `npm run build -w frontend` | Build only Next.js |
 | `npm run build -w backend` | Compile only API |
-| `npm run prisma:studio -w backend` | Prisma Studio |
+| `npm run build:production` | Prisma generate + full monorepo build (CI / release) |
 
 ## Troubleshooting
 
 ### `EADDRINUSE` / “port already in use”
 
-Something else is using **3002** or **5000**. Either stop that process or change:
+Something else is using **3000** or **5000**. Either stop that process or change:
 
 - Frontend: `frontend/package.json` scripts `dev` / `start` (`-p` flag).
 - Backend: `PORT` in `.env`.
@@ -118,7 +179,7 @@ If you change the API port, update `NEXT_PUBLIC_API_URL` so it still points at t
 
 ### API returns CORS errors
 
-The backend allows the origin in `CLIENT_URL` (`backend/src/app.ts`). It must match exactly how you open the site (e.g. `http://127.0.0.1:3002` vs `http://localhost:3002` are different origins).
+The backend allows the origin in `CLIENT_URL` (`backend/src/app.ts`). It must match exactly how you open the site (e.g. `http://127.0.0.1:3000` vs `http://localhost:3000` are different origins).
 
 ### “Invalid environment variables” on API startup
 

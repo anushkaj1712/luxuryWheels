@@ -1,5 +1,9 @@
 /**
  * Express application factory — middleware + route mounting.
+ *
+ * DEPLOYMENT: behind Render’s reverse proxy, `trust proxy` is enabled in production
+ * so `req.secure` / IP limits behave correctly.
+ *
  * CSRF note: JWT in Authorization header is not vulnerable to classic CSRF.
  * If you add cookie-based sessions later, add CSRF tokens or SameSite=strict cookies.
  */
@@ -9,8 +13,10 @@ import cors from "cors";
 import helmet from "helmet";
 import compression from "compression";
 import cookieParser from "cookie-parser";
+import { buildCorsOptions } from "./config/cors";
 import { apiLimiter } from "./middleware/rateLimit.middleware";
 import { errorHandler } from "./middleware/error.middleware";
+import { requestTimeoutMiddleware } from "./middleware/timeout.middleware";
 import { authRouter } from "./routes/auth.routes";
 import { carRouter } from "./routes/car.routes";
 import { bookingRouter } from "./routes/booking.routes";
@@ -23,19 +29,21 @@ import { uploadRouter } from "./routes/upload.routes";
 import { healthRouter } from "./routes/health.routes";
 import { contactRouter } from "./routes/contact.routes";
 
+const requestTimeoutMs = Number(process.env.API_REQUEST_TIMEOUT_MS) || 30_000;
+
 export function createApp() {
   const app = express();
 
+  if (process.env.NODE_ENV === "production") {
+    app.set("trust proxy", 1);
+  }
+
   app.use(helmet());
-  app.use(
-    cors({
-      origin: process.env.CLIENT_URL ?? "http://localhost:3002",
-      credentials: true,
-    }),
-  );
+  app.use(cors(buildCorsOptions()));
   app.use(compression());
   app.use(cookieParser());
   app.use(express.json({ limit: "2mb" }));
+  app.use(requestTimeoutMiddleware(requestTimeoutMs));
 
   app.use("/api", apiLimiter);
 

@@ -1,0 +1,17 @@
+# Render blueprint — https://render.com/docs/blueprint-spec
+# Connect this repo, then adjust env vars in the Render dashboard (secrets are not committed).
+
+services:
+  - type: web
+    name: drive-luxury-wheels-api
+    runtime: node
+    plan: starter
+    region: oregon
+    rootDir: backend
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npm run start
+    healthCheckPath: /api/health/live
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Set in dashboard (required): DATABASE_URL, JWT_SECRET, CLIENT_URL, CORS_ORIGINS (optional)

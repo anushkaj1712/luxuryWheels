@@ -10,6 +10,7 @@
   "scripts": {
     "dev": "concurrently -n frontend,backend -c cyan,magenta \"npm run dev -w frontend\" \"npm run dev -w backend\"",
     "build": "npm run build -w frontend && npm run build -w backend",
+    "build:production": "npm run prisma:generate -w backend && npm run build -w frontend && npm run build -w backend",
     "start": "concurrently -n frontend,backend -c cyan,magenta \"npm run start -w frontend\" \"npm run start -w backend\"",
     "lint": "npm run lint -w frontend"
   },
