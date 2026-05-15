@@ -3,7 +3,12 @@
   "version": "1.0.0",
   "private": true,
   "description": "Express + Prisma REST API for Drive Luxury Wheels (luxury dealership platform).",
+  "keywords": [],
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
   "main": "dist/server.js",
+  "types": "./dist/server.d.ts",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
@@ -12,13 +17,6 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "db:seed": "ts-node-dev --transpile-only prisma/seed.ts"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "prisma": {
-    "seed": "node prisma/seed.cjs"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
@@ -53,5 +51,8 @@
     "@types/nodemailer": "^8.0.0",
     "ts-node-dev": "^2.0.0",
     "typescript": "^6.0.3"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.cjs"
   }
 }
