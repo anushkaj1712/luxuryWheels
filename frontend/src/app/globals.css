@@ -1,4 +1,6 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /*
   Global design tokens — matte black luxury palette, metallic accents, glass surfaces.
