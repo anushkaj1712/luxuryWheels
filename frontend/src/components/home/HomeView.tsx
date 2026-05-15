@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import type { ApiCar, BlogPreview } from "@/lib/types/home";
+import type { InstagramPost } from "@/lib/instagram";
 import { HomeHero } from "@/components/home/HomeHero";
 
 const FeaturedCarousel = dynamic(
@@ -19,15 +20,16 @@ export type { ApiCar, BlogPreview };
 type Props = {
   featured: ApiCar[];
   blogs: BlogPreview[];
+  instagram: InstagramPost[];
 };
 
 /** Homepage shell — hero first paint, below-fold chunks code-split. */
-export default function HomeView({ featured, blogs }: Props) {
+export default function HomeView({ featured, blogs, instagram }: Props) {
   return (
     <div className="overflow-x-hidden">
       <HomeHero />
       <FeaturedCarousel cars={featured} />
-      <HomeBelowFold blogs={blogs} />
+      <HomeBelowFold blogs={blogs} instagram={instagram} />
     </div>
   );
 }

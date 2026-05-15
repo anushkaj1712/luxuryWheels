@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { fadeUp, scaleReveal } from "@/animations/reveal";
 import type { BlogPreview } from "@/lib/types/home";
+import type { InstagramPost } from "@/lib/instagram";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 
 const brands = [
@@ -25,13 +26,6 @@ const faq = [
   { q: "Do you ship internationally?", a: "Yes — enclosed transport, customs orchestration, and insurance bundled into a single concierge workflow." },
   { q: "Can I reserve remotely?", a: "Select a token on the vehicle page; Stripe or Razorpay captures payment and issues a digital receipt instantly." },
   { q: "Is every car verified?", a: "Each vehicle passes mechanical inspection, provenance review, and title diligence before listing." },
-];
-
-const instagram = [
-  "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?auto=format&fit=crop&w=600&q=70",
-  "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&w=600&q=70",
-  "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=600&q=70",
-  "https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=600&q=70",
 ];
 
 function CountUp({ to, suffix = "" }: { to: number; suffix?: string }) {
@@ -64,9 +58,10 @@ function CountUp({ to, suffix = "" }: { to: number; suffix?: string }) {
 
 type Props = {
   blogs: BlogPreview[];
+  instagram: InstagramPost[];
 };
 
-export function HomeBelowFold({ blogs }: Props) {
+export function HomeBelowFold({ blogs, instagram }: Props) {
   const [openFaq, setOpenFaq] = React.useState(0);
   const journal = blogs.length
     ? blogs
@@ -198,18 +193,25 @@ export function HomeBelowFold({ blogs }: Props) {
 
         <div className="mt-20">
           <h3 className="font-display text-2xl text-white">Instagram</h3>
+          <p className="mt-2 text-xs text-white/40">Latest from the atelier — add API credentials for live posts.</p>
           <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-            {instagram.map((src, i) => (
-              <div key={src} className="group relative aspect-square overflow-hidden rounded-2xl border border-white/10">
+            {instagram.map((post, i) => (
+              <Link
+                key={post.id}
+                href={post.permalink}
+                target="_blank"
+                rel="noreferrer"
+                className="group relative aspect-square overflow-hidden rounded-2xl border border-white/10"
+              >
                 <Image
-                  src={src}
-                  alt={`Showroom moment ${i + 1}`}
+                  src={post.mediaUrl}
+                  alt={post.caption ?? `Showroom moment ${i + 1}`}
                   fill
                   className="object-cover transition duration-500 group-hover:scale-[1.04]"
                   sizes="(max-width:768px) 50vw, 200px"
                   loading="lazy"
                 />
-              </div>
+              </Link>
             ))}
           </div>
         </div>

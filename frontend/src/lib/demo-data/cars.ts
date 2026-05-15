@@ -5,6 +5,7 @@
 
 import type { ApiCar } from "@/lib/types/home";
 import type { CarDetail } from "@/components/cars/CarDetailClient";
+import { filterDemoCars, type CarListFilters } from "@/lib/car-filters";
 
 export const DEMO_FEATURED_CARS: ApiCar[] = [
   {
@@ -81,9 +82,28 @@ export const DEMO_FEATURED_CARS: ApiCar[] = [
   },
 ];
 
-/** Paginated list body — matches `GET /api/cars` `data` field. */
-export function getDemoCarsListPage(): { items: ApiCar[]; nextCursor?: string } {
-  return { items: DEMO_FEATURED_CARS, nextCursor: undefined };
+/** Paginated list body — matches `GET /api/cars` `data` field (filters applied offline). */
+export function getDemoCarsListPage(filters?: Partial<CarListFilters> & { ids?: string[] }) {
+  if (filters?.ids?.length) {
+    const items = filters.ids
+      .map((id) => DEMO_FEATURED_CARS.find((c) => c.id === id))
+      .filter((c): c is ApiCar => Boolean(c));
+    return { items, nextCursor: undefined };
+  }
+
+  const merged: CarListFilters = {
+    search: filters?.search ?? "",
+    sort: filters?.sort ?? "price_desc",
+    brand: filters?.brand ?? "",
+    fuel: filters?.fuel ?? "",
+    transmission: filters?.transmission ?? "",
+    bodyType: filters?.bodyType ?? "",
+    minPrice: filters?.minPrice ?? "",
+    maxPrice: filters?.maxPrice ?? "",
+    year: filters?.year ?? "",
+  };
+
+  return { items: filterDemoCars(DEMO_FEATURED_CARS, merged), nextCursor: undefined };
 }
 
 function detailFromList(car: ApiCar): CarDetail {
@@ -91,7 +111,10 @@ function detailFromList(car: ApiCar): CarDetail {
     ...car,
     description:
       "Demonstrator listing — connect your Render API and Neon database to replace this copy with live inventory. Provenance, inspection, and concierge delivery workflows stay identical in production.",
-    features: ["Ceramic brakes", "Bespoke interior", "Night vision", "Air suspension", "Signature audio"],
+    features: ["Ceramic brakes", "Bespoke interior", "Night vision", "Air suspension", "Signature audio", "Coupe"],
+    horsepower: 640,
+    torqueNm: 565,
+    engine: "5.2L V10",
     images: car.thumbnail
       ? [{ id: `${car.id}-img`, url: car.thumbnail, alt: car.model, is360: false }]
       : [],

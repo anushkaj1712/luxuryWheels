@@ -76,7 +76,7 @@ export function SiteHeader() {
 
         <div className="hidden items-center gap-3 md:flex">
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/cars">Configure</Link>
+            <Link href="/contact">Private viewing</Link>
           </Button>
           <Button size="sm" asChild>
             <Link href={user ? "/dashboard" : "/login"}>{user ? "Garage" : "Sign in"}</Link>

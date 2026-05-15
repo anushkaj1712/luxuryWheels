@@ -8,6 +8,7 @@ import { DEMO_ADMIN_ANALYTICS } from "@/lib/demo-data/admin";
 import { DEMO_BLOG_LIST, getDemoBlogPost } from "@/lib/demo-data/blogs";
 import { buildDemoBookingCreateResponse, DEMO_BOOKINGS_ME } from "@/lib/demo-data/bookings";
 import { DEMO_FEATURED_CARS, getDemoCarDetailBySlug, getDemoCarsListPage } from "@/lib/demo-data/cars";
+import type { CarListFilters } from "@/lib/car-filters";
 
 function pathOnly(config: InternalAxiosRequestConfig): string {
   let p = config.url ?? "";
@@ -63,7 +64,23 @@ export function buildDemoAxiosResponse(
   }
 
   if (method === "GET" && p === "/cars") {
-    return ok(config, getDemoCarsListPage());
+    const params = config.params as Record<string, string | number | undefined> | undefined;
+    const idsRaw = params?.ids;
+    return ok(
+      config,
+      getDemoCarsListPage({
+        search: params?.search != null ? String(params.search) : "",
+        sort: (params?.sort as CarListFilters["sort"]) ?? "price_desc",
+        brand: params?.brand != null ? String(params.brand) : "",
+        fuel: params?.fuel != null ? String(params.fuel) : "",
+        transmission: params?.transmission != null ? String(params.transmission) : "",
+        bodyType: params?.bodyType != null ? String(params.bodyType) : "",
+        minPrice: params?.minPrice != null ? String(params.minPrice) : "",
+        maxPrice: params?.maxPrice != null ? String(params.maxPrice) : "",
+        year: params?.year != null ? String(params.year) : "",
+        ids: idsRaw ? String(idsRaw).split(",").filter(Boolean) : undefined,
+      }),
+    );
   }
 
   if (method === "GET" && p.startsWith("/cars/")) {

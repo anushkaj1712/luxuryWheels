@@ -7,6 +7,7 @@ const cars = new CarService();
 /** GET /api/cars — paginated list + filters (see query params). */
 r.get("/", async (req, res, next) => {
   try {
+    const idsParam = req.query.ids as string | undefined;
     const result = await cars.list({
       search: req.query.search as string | undefined,
       brand: req.query.brand as string | undefined,
@@ -15,6 +16,8 @@ r.get("/", async (req, res, next) => {
       year: req.query.year ? Number(req.query.year) : undefined,
       fuel: req.query.fuel as string | undefined,
       transmission: req.query.transmission as string | undefined,
+      bodyType: req.query.bodyType as string | undefined,
+      ids: idsParam ? idsParam.split(",").filter(Boolean) : undefined,
       sort: req.query.sort as any,
       cursor: req.query.cursor as string | undefined,
       take: req.query.take ? Number(req.query.take) : undefined,

@@ -15,6 +15,8 @@ export type CarFilters = {
   year?: number;
   fuel?: string;
   transmission?: string;
+  bodyType?: string;
+  ids?: string[];
   sort?: "price_asc" | "price_desc" | "year_desc" | "mileage_asc";
   cursor?: string;
   take?: number;
@@ -25,6 +27,15 @@ export class CarService {
     const take = Math.min(filters.take ?? 12, 48);
     const where: Prisma.CarWhereInput = { isAvailable: true };
 
+    if (filters.ids?.length) {
+      const cars = await prisma.car.findMany({
+        where: { id: { in: filters.ids }, isAvailable: true },
+        include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } },
+      });
+      const ordered = filters.ids.map((id) => cars.find((c) => c.id === id)).filter(Boolean) as typeof cars;
+      return { items: ordered.map(serializeCarListItem), nextCursor: undefined };
+    }
+
     if (filters.brand) where.brand = { equals: filters.brand, mode: "insensitive" };
     if (filters.year) where.year = filters.year;
     if (filters.minPrice != null || filters.maxPrice != null) {
@@ -34,6 +45,7 @@ export class CarService {
     }
     if (filters.fuel) where.fuel = filters.fuel as FuelType;
     if (filters.transmission) where.transmission = filters.transmission as TransmissionType;
+    if (filters.bodyType) where.features = { has: filters.bodyType };
     if (filters.search) {
       where.OR = [
         { brand: { contains: filters.search, mode: "insensitive" } },

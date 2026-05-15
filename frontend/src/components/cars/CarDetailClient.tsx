@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -9,7 +8,7 @@ import { Navigation, Pagination } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import { toast } from "sonner";
 import { api } from "@/services/api";
 import { DEMO_WHATSAPP_URL } from "@/constants/site";
@@ -21,6 +20,9 @@ import { useAuthStore } from "@/store/auth-store";
 import { useCompareStore } from "@/store/compare-store";
 import { useRecentStore } from "@/store/recent-store";
 import type { ApiCar } from "@/lib/types/home";
+import { SafeImage } from "@/components/media/SafeImage";
+import { resolveCarImageUrl } from "@/lib/image-utils";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
 
 export type CarDetail = {
   id: string;
@@ -37,6 +39,9 @@ export type CarDetail = {
   brochureUrl?: string | null;
   videoUrl?: string | null;
   model3dUrl?: string | null;
+  horsepower?: number | null;
+  torqueNm?: number | null;
+  engine?: string | null;
   locationCity?: string | null;
   locationLat?: number | null;
   locationLng?: number | null;
@@ -57,6 +62,11 @@ function emi(principal: number, annualRate: number, months: number) {
 export default function CarDetailClient({ initial }: { initial: CarDetail }) {
   const token = useAuthStore((s) => s.token);
   const addCompare = useCompareStore((s) => s.add);
+  const removeCompare = useCompareStore((s) => s.remove);
+  const inCompare = useCompareStore((s) => s.has);
+  const reduced = useReducedMotion();
+  const { scrollY } = useScroll();
+  const galleryY = useTransform(scrollY, [0, 400], [0, reduced ? 0 : -28]);
   const pushRecent = useRecentStore((s) => s.push);
   const searchParams = useSearchParams();
   const gallery =
@@ -143,24 +153,67 @@ export default function CarDetailClient({ initial }: { initial: CarDetail }) {
   const lat = initial.locationLat ?? 28.6139;
   const lng = initial.locationLng ?? 77.209;
 
+  const toggleCompare = () => {
+    if (inCompare(initial.id)) {
+      removeCompare(initial.id);
+      toast.message("Removed from compare");
+      return;
+    }
+    addCompare({
+      id: initial.id,
+      slug: initial.slug,
+      brand: initial.brand,
+      model: initial.model,
+      year: initial.year,
+      price: initial.price,
+      mileage: initial.mileage,
+      fuel: initial.fuel,
+      transmission: initial.transmission,
+      thumbnail: initial.images?.[0]?.url ?? null,
+      horsepower: initial.horsepower ?? null,
+      features: initial.features,
+    });
+    toast.success("Added to compare");
+  };
+
   return (
     <>
-    <div className="mx-auto max-w-6xl px-4 py-10 md:px-8">
+    <motion.div
+      className="mx-auto max-w-6xl px-4 py-10 md:px-8"
+      initial={reduced ? false : { opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+    >
       <div className="grid gap-10 lg:grid-cols-[1.15fr_0.85fr]">
         <div>
+          <motion.div style={{ y: galleryY }}>
           <Swiper modules={[Navigation, Pagination]} navigation pagination={{ clickable: true }} className="overflow-hidden rounded-3xl border border-white/10">
-            {gallery.map((img) => (
+            {gallery.map((img, i) => (
               <SwiperSlide key={img.id}>
                 <div className="relative aspect-[16/10] bg-zinc-900">
-                  <Image src={img.url.startsWith("http") ? img.url : "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1600&q=80"} alt={img.alt ?? ""} fill className="object-cover" sizes="(max-width:1024px) 100vw, 60vw" />
+                  <SafeImage src={resolveCarImageUrl(img.url)} alt={img.alt ?? initial.model} fill className="object-cover" sizes="(max-width:1024px) 100vw, 60vw" priority={i === 0} />
                 </div>
               </SwiperSlide>
             ))}
           </Swiper>
+          </motion.div>
           <p className="mt-3 text-xs text-white/45">360° viewer: flag `is360` on `CarImage` rows for frame sequences; GLB path via `model3dUrl` for R3F orbit.</p>
           {initial.videoUrl ? (
             <video className="mt-6 w-full rounded-2xl border border-white/10" controls src={initial.videoUrl} poster={initial.images?.[0]?.url ?? undefined} />
           ) : null}
+          <motion.div className="mt-10 rounded-2xl border border-white/10 bg-white/[0.02] p-6">
+            <h3 className="font-display text-lg text-white">The story</h3>
+            <p className="mt-3 text-sm leading-relaxed text-white/60">{initial.description}</p>
+            {initial.features?.length ? (
+              <ul className="mt-4 flex flex-wrap gap-2">
+                {initial.features.map((f) => (
+                  <li key={f} className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/55">
+                    {f}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </motion.div>
           <div className="mt-10 grid gap-6 md:grid-cols-2">
             <Card className="border-white/10 bg-white/[0.02]">
               <CardContent className="p-6">
@@ -258,8 +311,8 @@ export default function CarDetailClient({ initial }: { initial: CarDetail }) {
               <Button variant="outline" className="w-full" onClick={onWishlist}>
                 Save to wishlist
               </Button>
-              <Button variant="ghost" className="w-full" onClick={() => addCompare(initial.id)}>
-                Add to compare
+              <Button variant="ghost" className="w-full" onClick={toggleCompare}>
+                {inCompare(initial.id) ? "Remove from compare" : "Add to compare"}
               </Button>
               <Button variant="ghost" className="w-full" asChild>
                 <a href={buildWhatsAppHref(DEMO_WHATSAPP_URL, `Inquiry: ${initial.brand} ${initial.model}`)}>
@@ -281,20 +334,25 @@ export default function CarDetailClient({ initial }: { initial: CarDetail }) {
       <section className="mt-16">
         <h2 className="font-display text-2xl text-white">Similar vehicles</h2>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {(initial.similar ?? []).map((c: ApiCar) => (
-            <Link key={c.id} href={`/cars/${c.slug}`} className="rounded-2xl border border-white/10 bg-white/[0.02] p-4 transition hover:border-white/30">
-              <p className="text-xs uppercase tracking-widest text-white/40">{c.brand}</p>
-              <p className="font-medium text-white">
-                {c.model} · {c.year}
-              </p>
-              <p className="mt-2 text-sm text-white/55">
-                {new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(c.price)}
-              </p>
-            </Link>
+          {(initial.similar ?? []).map((c: ApiCar, i) => (
+            <motion.div key={c.id} initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}>
+              <Link href={`/cars/${c.slug}`} className="group block overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02] transition duration-300 hover:border-white/30">
+                <div className="relative aspect-[16/10]">
+                  <SafeImage src={resolveCarImageUrl(c.thumbnail)} alt={`${c.brand} ${c.model}`} fill className="object-cover transition duration-500 group-hover:scale-[1.03]" sizes="25vw" />
+                </div>
+                <div className="p-4">
+                  <p className="text-xs uppercase tracking-widest text-white/40">{c.brand}</p>
+                  <p className="font-medium text-white">{c.model} · {c.year}</p>
+                  <p className="mt-2 text-sm text-white/55">
+                    {new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(c.price)}
+                  </p>
+                </div>
+              </Link>
+            </motion.div>
           ))}
         </div>
       </section>
-    </div>
+    </motion.div>
 
     <AnimatePresence>
       {reserveSuccessOpen ? (

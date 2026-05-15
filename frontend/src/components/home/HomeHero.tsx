@@ -4,6 +4,7 @@ import * as React from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { gsap } from "gsap";
 import { ArrowRight, ChevronDown, Play } from "lucide-react";
@@ -13,14 +14,10 @@ import { fadeUp, heroTitle } from "@/animations/reveal";
 import { SITE_TAGLINE } from "@/constants/site";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { useIsMobile } from "@/hooks/use-is-mobile";
-import { Skeleton } from "@/components/ui/skeleton";
 
-const HeroGraphic = dynamic(
-  () => import("@/components/three/HeroGraphic").then((m) => m.HeroGraphic),
-  {
-    ssr: false,
-    loading: () => <Skeleton className="absolute inset-0 rounded-none opacity-0" aria-hidden />,
-  },
+const HeroCarShowcase = dynamic(
+  () => import("@/components/home/HeroCarShowcase").then((m) => m.HeroCarShowcase),
+  { ssr: false, loading: () => null },
 );
 
 const HERO_POSTER =
@@ -32,11 +29,19 @@ const HERO_VIDEO =
  * Cinematic hero — GSAP title reveal + deferred video/WebGL for faster FCP.
  */
 export function HomeHero() {
+  const router = useRouter();
   const heroLine = React.useRef<HTMLHeadingElement>(null);
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const reduced = useReducedMotion();
   const mobile = useIsMobile();
   const [videoReady, setVideoReady] = React.useState(false);
+  const [query, setQuery] = React.useState("");
+
+  const onSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = query.trim();
+    router.push(q ? `/cars?search=${encodeURIComponent(q)}` : "/cars");
+  };
 
   React.useLayoutEffect(() => {
     if (reduced || !heroLine.current) return;
@@ -102,7 +107,7 @@ export function HomeHero() {
 
       <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/70 to-black" aria-hidden />
 
-      {!reduced && !mobile ? <HeroGraphic /> : null}
+      {!reduced && !mobile ? <HeroCarShowcase /> : null}
 
       <div className="relative z-10 mx-auto flex max-w-6xl flex-col justify-end px-4 pb-24 pt-32 md:px-8 md:pb-32 md:pt-40">
         <motion.p
@@ -159,20 +164,26 @@ export function HomeHero() {
             </Link>
           </Button>
         </motion.div>
-        <motion.div
+        <motion.form
           variants={fadeUp}
           initial="hidden"
           animate="show"
           custom={3}
+          onSubmit={onSearch}
           className="mt-16 flex max-w-xl flex-col gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4 backdrop-blur-xl md:flex-row md:items-center"
         >
-          <Input placeholder="Search marque, model, VIN…" className="border-white/10 bg-black/40" aria-label="Search luxury cars" />
-          <Button className="shrink-0" asChild>
-            <Link href="/cars">Search</Link>
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search marque, model, VIN…"
+            className="border-white/10 bg-black/40"
+            aria-label="Search luxury cars"
+          />
+          <Button className="shrink-0" type="submit">
+            Search
           </Button>
-        </motion.div>
+        </motion.form>
       </div>
-
       {!reduced ? (
         <motion.div
           className="absolute bottom-8 left-1/2 z-10 -translate-x-1/2 text-white/40"
