@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { SITE_NAME } from "@/constants/site";
 import { useAuthStore } from "@/store/auth-store";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
 
 const links = [
   { href: "/cars", label: "Collection" },
@@ -18,17 +19,23 @@ const links = [
   { href: "/contact", label: "Concierge" },
 ];
 
-/**
- * Floating glass navigation — scroll-densifies background for cinematic contrast.
- */
 export function SiteHeader() {
   const pathname = usePathname();
   const user = useAuthStore((s) => s.user);
+  const reduced = useReducedMotion();
   const [open, setOpen] = React.useState(false);
   const [dense, setDense] = React.useState(false);
 
   React.useEffect(() => {
-    const onScroll = () => setDense(window.scrollY > 48);
+    let ticking = false;
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        setDense(window.scrollY > 48);
+        ticking = false;
+      });
+    };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -37,9 +44,9 @@ export function SiteHeader() {
   return (
     <motion.header
       className="fixed inset-x-0 top-0 z-50 px-4 pt-4 md:px-8"
-      initial={{ y: -24, opacity: 0 }}
+      initial={reduced ? false : { y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
     >
       <div
         className={cn(
@@ -87,24 +94,36 @@ export function SiteHeader() {
         </button>
       </div>
 
-      {open ? (
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mx-auto mt-3 max-w-6xl rounded-2xl border border-white/10 bg-black/80 p-4 md:hidden"
-        >
-          <div className="flex flex-col gap-3">
-            {links.map((l) => (
-              <Link key={l.href} href={l.href} className="text-sm text-white/80" onClick={() => setOpen(false)}>
-                {l.label}
+      <AnimatePresence>
+        {open ? (
+          <motion.div
+            key="mobile-nav"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+            className="mx-auto mt-3 max-w-6xl overflow-hidden rounded-2xl border border-white/10 bg-black/85 backdrop-blur-xl md:hidden"
+          >
+            <div className="flex flex-col gap-3 p-4">
+              {links.map((l, i) => (
+                <motion.div
+                  key={l.href}
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.04 }}
+                >
+                  <Link href={l.href} className="text-sm text-white/80" onClick={() => setOpen(false)}>
+                    {l.label}
+                  </Link>
+                </motion.div>
+              ))}
+              <Link href="/login" className="text-sm text-white" onClick={() => setOpen(false)}>
+                Sign in
               </Link>
-            ))}
-            <Link href="/login" className="text-sm text-white" onClick={() => setOpen(false)}>
-              Sign in
-            </Link>
-          </div>
-        </motion.div>
-      ) : null}
+            </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </motion.header>
   );
 }

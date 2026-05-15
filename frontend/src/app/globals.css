@@ -68,3 +68,20 @@ body::before {
 .animate-dlw-marquee {
   animation: dlw-marquee 32s linear infinite;
 }
+
+@keyframes dlw-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-dlw-shimmer {
+  animation: dlw-shimmer 1.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-dlw-marquee,
+  .animate-dlw-shimmer {
+    animation: none;
+  }
+}

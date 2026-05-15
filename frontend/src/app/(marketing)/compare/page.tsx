@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { api } from "@/services/api";
 import { useCompareStore } from "@/store/compare-store";
-import type { ApiCar } from "@/components/home/HomeView";
+import type { ApiCar } from "@/lib/types/home";
 
 /** Side-by-side compare — fetches each selected vehicle by slug from localStorage IDs (IDs only: extend to slug map as needed). */
 export default function ComparePage() {

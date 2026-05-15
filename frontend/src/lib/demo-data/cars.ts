@@ -3,7 +3,7 @@
  * Used only when the live API is unreachable (Vercel showcase / offline).
  */
 
-import type { ApiCar } from "@/components/home/HomeView";
+import type { ApiCar } from "@/lib/types/home";
 import type { CarDetail } from "@/components/cars/CarDetailClient";
 
 export const DEMO_FEATURED_CARS: ApiCar[] = [

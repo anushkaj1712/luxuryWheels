@@ -1,21 +1,15 @@
 import { SiteFooter } from "@/components/layout/SiteFooter";
-import { SiteHeader } from "@/components/layout/SiteHeader";
-import { ScrollProgress } from "@/components/layout/ScrollProgress";
-import { AIConcierge } from "@/components/ai/AIConcierge";
+import { MarketingAddons } from "@/components/layout/MarketingAddons";
 
-/**
- * Marketing shell — shared chrome for public pages (nav, scroll progress, AI dock).
- */
+/** Marketing shell — server layout; interactive chrome in client addon bundle. */
 export default function MarketingLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <ScrollProgress />
-      <SiteHeader />
+      <MarketingAddons />
       <main id="main-content" className="pt-24">
         {children}
       </main>
       <SiteFooter />
-      <AIConcierge />
     </>
   );
 }

@@ -20,7 +20,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useAuthStore } from "@/store/auth-store";
 import { useCompareStore } from "@/store/compare-store";
 import { useRecentStore } from "@/store/recent-store";
-import type { ApiCar } from "@/components/home/HomeView";
+import type { ApiCar } from "@/lib/types/home";
 
 export type CarDetail = {
   id: string;

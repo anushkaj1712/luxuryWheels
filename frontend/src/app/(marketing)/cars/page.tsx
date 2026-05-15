@@ -8,7 +8,7 @@ import { SlidersHorizontal, LayoutGrid, List } from "lucide-react";
 import { api } from "@/services/api";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import type { ApiCar } from "@/components/home/HomeView";
+import type { ApiCar } from "@/lib/types/home";
 
 /**
  * Collection page — advanced filters, grid/list toggle, infinite-style pagination via cursor.
