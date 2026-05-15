@@ -1,19 +1,20 @@
 /**
- * Centralized public environment resolution for Next.js (Vercel + local dev).
+ * Centralized public environment resolution for Next.js (Vercel + local dev + offline demo).
  *
  * RULES:
- * - Never rely on hardcoded production URLs — use `NEXT_PUBLIC_*` on Vercel.
- * - On Vercel, `VERCEL_URL` is a safe fallback for **server-side** absolute URLs when
- *   `NEXT_PUBLIC_SITE_URL` is not yet set (e.g. preview deployments).
- * - On Vercel (`VERCEL=1`), missing `NEXT_PUBLIC_*` throws so misconfigured deploys fail in CI.
- * - Local `next build` (NODE_ENV=production without Vercel) uses loopback fallbacks for prerender only.
+ * - **Never throw during `next build`** — missing `NEXT_PUBLIC_*` must not break static generation.
+ * - When `NEXT_PUBLIC_API_URL` is absent, the browser Axios client targets a non-routable placeholder host;
+ *   `src/lib/demo-axios-resolver.ts` turns failed requests into curated demo payloads.
+ * - On Vercel, `VERCEL_URL` supplies a safe server-side absolute URL when `NEXT_PUBLIC_SITE_URL` is absent.
  */
 
 const TRAILING_SLASH = /\/+$/;
 
-function isVercelDeployment(): boolean {
-  return process.env.VERCEL === "1";
-}
+/**
+ * Intentionally unroutable host (RFC 6761 `.invalid`) so failed DNS never hits a real third party.
+ * Axios + demo resolver then serve synthetic JSON identical to the Express API envelope.
+ */
+export const OFFLINE_API_PLACEHOLDER_BASE = "https://offline.api.invalid/api";
 
 function stripTrailingSlash(url: string): string {
   return url.replace(TRAILING_SLASH, "");
@@ -35,44 +36,28 @@ export function getPublicSiteUrl(): string {
   const vercel = process.env.VERCEL_URL?.trim();
   if (vercel) return `https://${stripTrailingSlash(vercel)}`;
 
-  if (isVercelDeployment()) {
-    throw new Error(
-      "NEXT_PUBLIC_SITE_URL is not set. In Vercel → Settings → Environment Variables, add NEXT_PUBLIC_SITE_URL (your public https:// domain).",
-    );
-  }
-
-  // Local `next build` uses NODE_ENV=production without Vercel env — use loopback for prerender only.
   return "http://127.0.0.1:3000";
 }
 
 /**
- * API base for server components / Route Handlers / `fetch` to Render.
+ * Live API base for server components, or `null` when unset (caller should use demo fallbacks).
  */
-export function getServerApiBaseUrl(): string {
+export function getServerApiBaseUrl(): string | null {
   const configured = process.env.NEXT_PUBLIC_API_URL?.trim();
   if (configured) return normalizeApiBaseUrl(configured);
-
-  if (isVercelDeployment()) {
-    throw new Error(
-      "NEXT_PUBLIC_API_URL is not set. Add it in Vercel (e.g. https://your-api.onrender.com/api).",
-    );
-  }
-
-  return normalizeApiBaseUrl("http://127.0.0.1:5000");
+  return null;
 }
 
 /**
- * API base for the browser (Axios). Inlined at build time from `NEXT_PUBLIC_API_URL`.
+ * Axios `baseURL` — always a string: real API or offline placeholder (demo resolver handles responses).
  */
 export function getBrowserApiBaseUrl(): string {
   const configured = process.env.NEXT_PUBLIC_API_URL?.trim();
   if (configured) return normalizeApiBaseUrl(configured);
+  return OFFLINE_API_PLACEHOLDER_BASE;
+}
 
-  if (isVercelDeployment()) {
-    throw new Error(
-      "NEXT_PUBLIC_API_URL is required on Vercel (Settings → Environment Variables).",
-    );
-  }
-
-  return normalizeApiBaseUrl("http://127.0.0.1:5000");
+/** `true` when no public API URL was provided at build time (showcase / Vercel demo). */
+export function isPublicDemoDataset(): boolean {
+  return !process.env.NEXT_PUBLIC_API_URL?.trim();
 }

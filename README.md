@@ -85,6 +85,17 @@ For hosted builds that must run Prisma generate first:
 npm run build:production
 ```
 
+## Showcase mode (Vercel without backend)
+
+You can deploy **only the Next.js app** to Vercel with **no** `NEXT_PUBLIC_API_URL`, database, or payment keys:
+
+- The UI, motion, and navigation work as a **premium public demo**.
+- Axios calls try the live API first; if the host is unreachable, the client serves **curated demo JSON** that matches the real API envelope (`src/lib/demo-axios-resolver.ts`).
+- Server routes (`/cars/[slug]`, `/blog`, sitemap, etc.) use `fetchApiOrDemo` (`src/lib/server-fetch.ts`) so **static generation never fails** when the API is absent.
+- A small ribbon appears (hide with `NEXT_PUBLIC_HIDE_DEMO_RIBBON=1`). Optional WhatsApp handoff: `NEXT_PUBLIC_DEMO_WHATSAPP_URL`.
+
+When you add `NEXT_PUBLIC_API_URL` + backend secrets on Render, the same code paths automatically prefer **live data** — no rewrites required.
+
 ## Production deployment (Vercel + Render + Neon/Supabase)
 
 This stack deploys **without Docker/Kubernetes**: Next.js on Vercel, Express on Render, PostgreSQL on Neon or Supabase.
@@ -113,7 +124,7 @@ This stack deploys **without Docker/Kubernetes**: Next.js on Vercel, Express on 
 
 1. Import the same repository.
 2. **Root Directory:** `frontend`
-3. Set **`NEXT_PUBLIC_API_URL`** to your Render URL including `/api`, and **`NEXT_PUBLIC_SITE_URL`** to your canonical `https://` domain (Vercel also provides `VERCEL_URL` for server-side fallbacks).
+3. Set **`NEXT_PUBLIC_SITE_URL`** to your canonical `https://` domain (recommended). **`NEXT_PUBLIC_API_URL`** can be omitted for a showcase-only deploy; add it when your Render API is live.
 
 ### CORS
 
@@ -134,7 +145,7 @@ This stack deploys **without Docker/Kubernetes**: Next.js on Vercel, Express on 
 |--------|----------------|-----|
 | API exits on boot in production | `CLIENT_URL` is loopback | Set `CLIENT_URL` to your deployed `https://` frontend (`backend/src/config/env.ts`). |
 | `/api/health/ready` returns 503 | Database URL / firewall / SSL | Verify `DATABASE_URL`; allow Render outbound IPs if your DB is IP-restricted. |
-| Vercel build error about env | Missing `NEXT_PUBLIC_*` | Set `NEXT_PUBLIC_SITE_URL` and `NEXT_PUBLIC_API_URL` for Production (Preview as needed). |
+| Vercel build error about env | Missing `NEXT_PUBLIC_*` | For **full** production, set `NEXT_PUBLIC_SITE_URL` + `NEXT_PUBLIC_API_URL`. For a **UI-only showcase**, you can omit `NEXT_PUBLIC_API_URL` — the app builds and uses demo fallbacks (see “Showcase mode”). |
 | Browser CORS errors | Origin not allow-listed | Fix `CLIENT_URL` / `CORS_ORIGINS` on Render; redeploy API. |
 | HTTP 408 from API | Slow handler vs timeout | Raise `API_REQUEST_TIMEOUT_MS` or optimize the route. |
 

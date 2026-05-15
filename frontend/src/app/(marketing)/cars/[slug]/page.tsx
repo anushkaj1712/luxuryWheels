@@ -1,34 +1,33 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import CarDetailClient, { type CarDetail } from "@/components/cars/CarDetailClient";
-
-import { getServerApiBaseUrl } from "@/lib/public-env";
-
-const base = () => getServerApiBaseUrl();
+import { getDemoCarDetailBySlug } from "@/lib/demo-data/cars";
+import { fetchApiOrDemo } from "@/lib/server-fetch";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  try {
-    const res = await fetch(`${base()}/cars/${slug}`, { next: { revalidate: 60 } });
-    const json = await res.json();
-    const c = json.data as CarDetail | undefined;
-    if (!c) return { title: "Vehicle" };
-    return {
-      title: `${c.brand} ${c.model}`,
-      description: c.description?.slice(0, 160),
-      openGraph: { images: c.images?.[0]?.url ? [c.images[0].url] : [] },
-    };
-  } catch {
-    return { title: "Vehicle" };
-  }
+  const json = await fetchApiOrDemo<CarDetail>(
+    `/cars/${slug}`,
+    { next: { revalidate: 60 } },
+    () => ({ data: getDemoCarDetailBySlug(slug) ?? undefined }),
+  );
+  const c = json.data;
+  if (!c) return { title: "Vehicle" };
+  return {
+    title: `${c.brand} ${c.model}`,
+    description: c.description?.slice(0, 160),
+    openGraph: { images: c.images?.[0]?.url ? [c.images[0].url] : [] },
+  };
 }
 
 export default async function CarPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const res = await fetch(`${base()}/cars/${slug}`, { next: { revalidate: 30 } }).catch(() => null);
-  if (!res?.ok) notFound();
-  const json = await res.json();
-  const car = json.data as CarDetail | undefined;
+  const json = await fetchApiOrDemo<CarDetail>(
+    `/cars/${slug}`,
+    { next: { revalidate: 30 } },
+    () => ({ data: getDemoCarDetailBySlug(slug) ?? undefined }),
+  );
+  const car = json.data;
   if (!car) notFound();
 
   const jsonLd = {

@@ -9,9 +9,11 @@ import { Navigation, Pagination } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { api } from "@/services/api";
+import { DEMO_WHATSAPP_URL } from "@/constants/site";
+import { buildWhatsAppHref } from "@/lib/whatsapp";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -85,6 +87,8 @@ export default function CarDetailClient({ initial }: { initial: CarDetail }) {
   const financed = Math.max(initial.price - down, 0);
   const monthly = emi(financed, rate, tenure);
 
+  const [reserveSuccessOpen, setReserveSuccessOpen] = React.useState(false);
+
   const onWishlist = async () => {
     if (!token) return toast.error("Sign in to save");
     try {
@@ -104,10 +108,32 @@ export default function CarDetailClient({ initial }: { initial: CarDetail }) {
         currency: "INR",
         provider,
       });
-      toast.success("Booking created — complete gateway in production");
-      if (process.env.NODE_ENV === "development" && data.data?.gateway?.mode === "demo") {
-        await api.post("/bookings/demo-confirm", { paymentId: data.data.paymentId });
-        toast.success("Demo payment confirmed");
+      toast.success("Reservation secured");
+      setReserveSuccessOpen(true);
+      try {
+        const raw = window.localStorage.getItem("dlw-demo-reservations");
+        const arr = (raw ? JSON.parse(raw) : []) as unknown[];
+        arr.push({
+          slug: initial.slug,
+          brand: initial.brand,
+          model: initial.model,
+          tokenAmt,
+          provider,
+          at: Date.now(),
+        });
+        window.localStorage.setItem("dlw-demo-reservations", JSON.stringify(arr.slice(-12)));
+      } catch {
+        /* ignore quota / private mode */
+      }
+      const gateway = data.data?.gateway as { mode?: string } | undefined;
+      const paymentId = data.data?.paymentId as string | undefined;
+      if (gateway?.mode === "demo" && paymentId) {
+        try {
+          await api.post("/bookings/demo-confirm", { paymentId });
+          toast.success("Demo payment recorded");
+        } catch {
+          /* production API may block demo-confirm — demo Axios layer still succeeds offline */
+        }
       }
     } catch {
       toast.error("Reservation failed");
@@ -118,6 +144,7 @@ export default function CarDetailClient({ initial }: { initial: CarDetail }) {
   const lng = initial.locationLng ?? 77.209;
 
   return (
+    <>
     <div className="mx-auto max-w-6xl px-4 py-10 md:px-8">
       <div className="grid gap-10 lg:grid-cols-[1.15fr_0.85fr]">
         <div>
@@ -235,7 +262,9 @@ export default function CarDetailClient({ initial }: { initial: CarDetail }) {
                 Add to compare
               </Button>
               <Button variant="ghost" className="w-full" asChild>
-                <a href={`https://wa.me/919000000000?text=${encodeURIComponent(`Inquiry: ${initial.brand} ${initial.model}`)}`}>WhatsApp dealer</a>
+                <a href={buildWhatsAppHref(DEMO_WHATSAPP_URL, `Inquiry: ${initial.brand} ${initial.model}`)}>
+                  WhatsApp dealer
+                </a>
               </Button>
               {initial.brochureUrl ? (
                 <Button variant="ghost" className="w-full" asChild>
@@ -266,5 +295,47 @@ export default function CarDetailClient({ initial }: { initial: CarDetail }) {
         </div>
       </section>
     </div>
+
+    <AnimatePresence>
+      {reserveSuccessOpen ? (
+        <motion.div
+          className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 px-4 backdrop-blur-md"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.div
+            initial={{ scale: 0.94, opacity: 0, y: 12 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.96, opacity: 0, y: 8 }}
+            className="max-w-md rounded-3xl border border-amber-400/25 bg-gradient-to-b from-zinc-900 to-black p-8 text-center shadow-[0_0_60px_rgba(251,191,36,0.12)]"
+          >
+            <p className="text-xs uppercase tracking-[0.4em] text-amber-200/80">Reservation</p>
+            <h3 className="mt-3 font-display text-2xl text-white">Your token is reserved</h3>
+            <p className="mt-3 text-sm text-white/55">
+              {initial.brand} {initial.model} · {new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(tokenAmt)} token
+            </p>
+            <p className="mt-4 text-xs text-white/40">
+              Showcase mode: connect Render + payment keys to capture live settlements. A copy was saved locally for your review.
+            </p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+              <Button asChild className="rounded-full">
+                <a
+                  href={buildWhatsAppHref(DEMO_WHATSAPP_URL, `Priority inquiry — ${initial.brand} ${initial.model} (${initial.slug})`)}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  WhatsApp concierge
+                </a>
+              </Button>
+              <Button type="button" variant="outline" className="rounded-full" onClick={() => setReserveSuccessOpen(false)}>
+                Continue browsing
+              </Button>
+            </div>
+          </motion.div>
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
+    </>
   );
 }

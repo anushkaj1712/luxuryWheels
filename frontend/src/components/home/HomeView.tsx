@@ -16,6 +16,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { fadeUp, staggerContainer } from "@/animations/reveal";
 import { HeroGraphic } from "@/components/three/HeroGraphic";
+import { DEMO_FEATURED_CARS } from "@/lib/demo-data/cars";
 import { SITE_TAGLINE } from "@/constants/site";
 
 export type BlogPreview = { slug: string; title: string; excerpt?: string };
@@ -99,7 +100,7 @@ export default function HomeView() {
         }
       } catch {
         if (!cancelled) {
-          setFeatured(fallbackFeatured);
+          setFeatured(DEMO_FEATURED_CARS);
           setBlogs([]);
         }
       }
@@ -180,7 +181,7 @@ export default function HomeView() {
           </motion.h2>
         </motion.div>
         <Swiper modules={[Pagination, Autoplay]} pagination={{ clickable: true }} autoplay={{ delay: 4800 }} spaceBetween={18} slidesPerView={1.1} breakpoints={{ 768: { slidesPerView: 2.05 }, 1024: { slidesPerView: 3 } }}>
-          {(featured.length ? featured : fallbackFeatured).map((car) => (
+          {(featured.length ? featured : DEMO_FEATURED_CARS).map((car) => (
             <SwiperSlide key={car.id}>
               <Link href={`/cars/${car.slug}`} className="group block h-full">
                 <Card className="h-full overflow-hidden border-white/10 bg-gradient-to-b from-white/[0.07] to-transparent p-0 transition duration-500 group-hover:-translate-y-1 group-hover:border-white/25">
@@ -337,42 +338,3 @@ export default function HomeView() {
     </div>
   );
 }
-
-const fallbackFeatured: ApiCar[] = [
-  {
-    id: "1",
-    slug: "lamborghini-huracan-sto-2023",
-    brand: "Lamborghini",
-    model: "Huracán STO",
-    year: 2023,
-    price: 485000,
-    mileage: 1200,
-    fuel: "PETROL",
-    transmission: "AUTOMATIC",
-    thumbnail: "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?auto=format&fit=crop&w=1200&q=80",
-  },
-  {
-    id: "2",
-    slug: "rolls-phantom-extended-2024",
-    brand: "Rolls-Royce",
-    model: "Phantom Extended",
-    year: 2024,
-    price: 920000,
-    mileage: 400,
-    fuel: "PETROL",
-    transmission: "AUTOMATIC",
-    thumbnail: "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&w=1200&q=80",
-  },
-  {
-    id: "3",
-    slug: "porsche-911-turbo-s-2023",
-    brand: "Porsche",
-    model: "911 Turbo S",
-    year: 2023,
-    price: 245000,
-    mileage: 3100,
-    fuel: "PETROL",
-    transmission: "AUTOMATIC",
-    thumbnail: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1200&q=80",
-  },
-];
