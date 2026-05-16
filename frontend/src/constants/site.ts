@@ -5,7 +5,9 @@
 import { getBrowserApiBaseUrl, isPublicDemoDataset } from "@/lib/public-env";
 
 export const SITE_NAME = "Drive Luxury Wheels";
-export const SITE_TAGLINE = "Curated velocity. Bespoke ownership.";
+export const SITE_TAGLINE = "LUXURY | LEGACY | LIFESTYLE";
+export const SITE_TAGLINE_PARTS = ["LUXURY", "LEGACY", "LIFESTYLE"] as const;
+export const LOGO_PATH = "/logo.png";
 export const API_URL = getBrowserApiBaseUrl();
 
 /** Hide the subtle demo ribbon only when explicitly disabled. */

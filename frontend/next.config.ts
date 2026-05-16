@@ -7,6 +7,7 @@ loadRootEnv({ path: path.resolve(__dirname, "../.env") });
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  devIndicators: false,
   outputFileTracingRoot: path.join(__dirname, ".."),
   images: {
     remotePatterns: [

@@ -3,12 +3,9 @@
 import * as React from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation, Pagination } from "swiper/modules";
-import "swiper/css";
-import "swiper/css/navigation";
-import "swiper/css/pagination";
-import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { CarDetailGallery } from "@/components/cars/CarDetailGallery";
+import { BrandTagline } from "@/components/brand/BrandTagline";
 import { toast } from "sonner";
 import { api } from "@/services/api";
 import { DEMO_WHATSAPP_URL } from "@/constants/site";
@@ -21,7 +18,7 @@ import { useCompareStore } from "@/store/compare-store";
 import { useRecentStore } from "@/store/recent-store";
 import type { ApiCar } from "@/lib/types/home";
 import { SafeImage } from "@/components/media/SafeImage";
-import { resolveCarImageUrl } from "@/lib/image-utils";
+import { resolveCarImageUrl, FALLBACK_CAR } from "@/lib/image-utils";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 
 export type CarDetail = {
@@ -65,8 +62,6 @@ export default function CarDetailClient({ initial }: { initial: CarDetail }) {
   const removeCompare = useCompareStore((s) => s.remove);
   const inCompare = useCompareStore((s) => s.has);
   const reduced = useReducedMotion();
-  const { scrollY } = useScroll();
-  const galleryY = useTransform(scrollY, [0, 400], [0, reduced ? 0 : -28]);
   const pushRecent = useRecentStore((s) => s.push);
   const searchParams = useSearchParams();
   const gallery =
@@ -186,22 +181,18 @@ export default function CarDetailClient({ initial }: { initial: CarDetail }) {
     >
       <div className="grid gap-10 lg:grid-cols-[1.15fr_0.85fr]">
         <div>
-          <motion.div style={{ y: galleryY }}>
-          <Swiper modules={[Navigation, Pagination]} navigation pagination={{ clickable: true }} className="overflow-hidden rounded-3xl border border-white/10">
-            {gallery.map((img, i) => (
-              <SwiperSlide key={img.id}>
-                <div className="relative aspect-[16/10] bg-zinc-900">
-                  <SafeImage src={resolveCarImageUrl(img.url)} alt={img.alt ?? initial.model} fill className="object-cover" sizes="(max-width:1024px) 100vw, 60vw" priority={i === 0} />
-                </div>
-              </SwiperSlide>
-            ))}
-          </Swiper>
-          </motion.div>
+          <CarDetailGallery images={gallery} title={`${initial.brand} ${initial.model}`} />
+          <BrandTagline size="sm" align="left" className="mt-4" />
           <p className="mt-3 text-xs text-white/45">360° viewer: flag `is360` on `CarImage` rows for frame sequences; GLB path via `model3dUrl` for R3F orbit.</p>
           {initial.videoUrl ? (
             <video className="mt-6 w-full rounded-2xl border border-white/10" controls src={initial.videoUrl} poster={initial.images?.[0]?.url ?? undefined} />
           ) : null}
-          <motion.div className="mt-10 rounded-2xl border border-white/10 bg-white/[0.02] p-6">
+          <motion.div
+            initial={reduced ? false : { opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-10%" }}
+            className="dlw-card mt-10 p-6"
+          >
             <h3 className="font-display text-lg text-white">The story</h3>
             <p className="mt-3 text-sm leading-relaxed text-white/60">{initial.description}</p>
             {initial.features?.length ? (
@@ -277,8 +268,13 @@ export default function CarDetailClient({ initial }: { initial: CarDetail }) {
           </div>
         </div>
 
-        <motion.aside initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="lg:sticky lg:top-28 h-max space-y-4">
-          <Card className="border-white/10 bg-gradient-to-b from-white/[0.06] to-transparent p-6 backdrop-blur-xl">
+        <motion.aside
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="lg:sticky lg:top-28 h-max space-y-4"
+        >
+          <Card className="border-dlw-red/20 bg-gradient-to-b from-white/[0.08] via-dlw-metal/50 to-transparent p-6 shadow-dlw-red backdrop-blur-xl">
             <p className="text-xs uppercase tracking-[0.35em] text-white/40">{initial.brand}</p>
             <h1 className="mt-2 font-display text-3xl text-white">
               {initial.model} · {initial.year}
@@ -305,7 +301,7 @@ export default function CarDetailClient({ initial }: { initial: CarDetail }) {
                   Stripe
                 </Button>
               </div>
-              <Button className="w-full" onClick={onReserve}>
+              <Button className="w-full" variant="luxury" onClick={onReserve}>
                 Reserve now
               </Button>
               <Button variant="outline" className="w-full" onClick={onWishlist}>
@@ -332,13 +328,13 @@ export default function CarDetailClient({ initial }: { initial: CarDetail }) {
       </div>
 
       <section className="mt-16">
-        <h2 className="font-display text-2xl text-white">Similar vehicles</h2>
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <h2 className="font-brand text-2xl font-bold italic text-white">Similar vehicles</h2>
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {(initial.similar ?? []).map((c: ApiCar, i) => (
             <motion.div key={c.id} initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}>
-              <Link href={`/cars/${c.slug}`} className="group block overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02] transition duration-300 hover:border-white/30">
+              <Link href={`/cars/${c.slug}`} className="dlw-card group block overflow-hidden transition duration-300 hover:border-dlw-red/35 hover:shadow-dlw-red">
                 <div className="relative aspect-[16/10]">
-                  <SafeImage src={resolveCarImageUrl(c.thumbnail)} alt={`${c.brand} ${c.model}`} fill className="object-cover transition duration-500 group-hover:scale-[1.03]" sizes="25vw" />
+                  <SafeImage src={resolveCarImageUrl(c.thumbnail)} alt={`${c.brand} ${c.model}`} fill className="object-cover transition duration-500 group-hover:scale-[1.03]" sizes="33vw" fallbackSrc={FALLBACK_CAR} />
                 </div>
                 <div className="p-4">
                   <p className="text-xs uppercase tracking-widest text-white/40">{c.brand}</p>

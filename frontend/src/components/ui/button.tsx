@@ -10,7 +10,9 @@ const buttonVariants = cva(
       variant: {
         default:
           "bg-gradient-to-r from-zinc-100 via-white to-zinc-200 text-black shadow-[0_0_40px_-10px_rgba(255,255,255,0.35)] hover:shadow-[0_0_55px_-8px_rgba(255,255,255,0.55)] hover:-translate-y-0.5",
-        ghost: "bg-white/5 text-white border border-white/10 hover:bg-white/10 hover:border-white/25",
+        luxury:
+          "dlw-btn-luxury border border-dlw-red/30 text-white hover:-translate-y-0.5",
+        ghost: "bg-white/5 text-white border border-white/10 hover:bg-white/10 hover:border-dlw-red/25",
         outline: "border border-white/20 text-white hover:bg-white/5",
         subtle: "bg-white/[0.03] text-white/90 hover:bg-white/[0.07]",
       },

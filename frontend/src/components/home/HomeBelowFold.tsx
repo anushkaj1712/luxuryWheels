@@ -7,6 +7,8 @@ import { motion, useInView } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { fadeUp, scaleReveal } from "@/animations/reveal";
+import { LuxuryDivider } from "@/components/brand/LuxuryDivider";
+import { BrandTagline } from "@/components/brand/BrandTagline";
 import type { BlogPreview } from "@/lib/types/home";
 import type { InstagramPost } from "@/lib/instagram";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
@@ -69,7 +71,9 @@ export function HomeBelowFold({ blogs, instagram }: Props) {
 
   return (
     <>
-      <section className="border-y border-white/[0.06] bg-black/40 py-8" aria-label="Premium brands">
+      <LuxuryDivider className="py-6" />
+
+      <section className="border-y border-white/[0.06] bg-dlw-metal/40 py-8" aria-label="Premium brands">
         <div className="relative overflow-hidden">
           <div className="flex w-max animate-dlw-marquee gap-16 pr-16">
             {[...brands, ...brands].map((b, i) => (
@@ -105,7 +109,7 @@ export function HomeBelowFold({ blogs, instagram }: Props) {
             { label: "Avg. closing days", value: 9, suffix: "" },
           ].map((s) => (
             <motion.div key={s.label} variants={scaleReveal} initial="hidden" whileInView="show" viewport={{ once: true }}>
-              <Card className="border-white/10 bg-white/[0.02] p-6 transition duration-500 hover:border-white/20">
+              <Card className="dlw-card border-dlw-red/10 p-6 transition duration-500 hover:border-dlw-red/30 hover:shadow-dlw-red">
                 <p className="text-3xl font-semibold text-white md:text-4xl">
                   <CountUp to={s.value} suffix={s.suffix} />
                 </p>
@@ -130,7 +134,7 @@ export function HomeBelowFold({ blogs, instagram }: Props) {
           <div className="mt-10 grid gap-6 md:grid-cols-2">
             {[
               { name: "A. Verma", quote: "DLW orchestrated a cross-border acquisition flawlessly — white-glove beyond expectation." },
-              { name: "S. Laurent", quote: "The configurator session felt like haute couture for automobiles." },
+              { name: "S. Laurent", quote: "The private viewing felt like haute couture for automobiles." },
             ].map((t, i) => (
               <motion.div key={t.name} variants={fadeUp} custom={i} initial="hidden" whileInView="show" viewport={{ once: true }}>
                 <Card className="border-white/10 bg-black/50 p-8 transition duration-500 hover:border-white/20">
@@ -215,6 +219,16 @@ export function HomeBelowFold({ blogs, instagram }: Props) {
             ))}
           </div>
         </div>
+
+        <section className="dlw-glass-strong relative mt-20 overflow-hidden rounded-3xl p-10 text-center">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,0,0,0.12),transparent_70%)]" aria-hidden />
+          <BrandTagline size="md" className="relative" />
+          <h3 className="relative mt-6 font-brand text-2xl font-bold italic text-white md:text-3xl">Begin your acquisition journey</h3>
+          <p className="relative mx-auto mt-3 max-w-md text-sm text-white/55">Private viewings, bespoke finance, and white-glove delivery — by appointment only.</p>
+          <Button variant="luxury" className="relative mt-8" asChild>
+            <Link href="/contact">Request concierge</Link>
+          </Button>
+        </section>
       </section>
     </>
   );

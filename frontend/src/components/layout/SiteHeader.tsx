@@ -7,7 +7,8 @@ import { Menu, X } from "lucide-react";
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { SITE_NAME } from "@/constants/site";
+import { BrandLogo } from "@/components/brand/BrandLogo";
+import { BrandTagline } from "@/components/brand/BrandTagline";
 import { useAuthStore } from "@/store/auth-store";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 
@@ -50,14 +51,13 @@ export function SiteHeader() {
     >
       <div
         className={cn(
-          "mx-auto flex max-w-6xl items-center justify-between rounded-2xl border border-white/[0.08] px-4 py-3 shadow-[0_20px_80px_-40px_rgba(0,0,0,0.9)] backdrop-blur-2xl transition-colors duration-500 md:px-6",
-          dense ? "bg-black/75" : "bg-black/40",
+          "mx-auto flex max-w-6xl items-center justify-between gap-4 rounded-2xl border px-4 py-3 shadow-dlw-glass backdrop-blur-2xl transition-all duration-500 md:px-6",
+          dense
+            ? "border-white/12 bg-dlw-charcoal/90 shadow-dlw-red/20"
+            : "border-white/[0.08] bg-gradient-to-r from-dlw-metal/80 via-dlw-charcoal/70 to-dlw-metal/80",
         )}
       >
-        <Link href="/" className="group flex items-center gap-2" aria-label={`${SITE_NAME} home`}>
-          <span className="font-display text-lg tracking-[0.22em] text-white md:text-xl">{SITE_NAME}</span>
-          <span className="hidden h-px w-8 origin-left scale-x-0 bg-gradient-to-r from-white/0 via-white/70 to-white/0 transition group-hover:scale-x-100 md:block" />
-        </Link>
+        <BrandLogo size="md" showWordmark />
 
         <nav className="hidden items-center gap-8 md:flex" aria-label="Primary">
           {links.map((l) => (
@@ -65,20 +65,20 @@ export function SiteHeader() {
               key={l.href}
               href={l.href}
               className={cn(
-                "text-xs uppercase tracking-[0.28em] text-white/55 transition hover:text-white",
+                "relative text-xs uppercase tracking-[0.28em] text-white/55 transition hover:text-white",
                 pathname === l.href && "text-white",
               )}
             >
               {l.label}
+              {pathname === l.href ? (
+                <motion.span layoutId="nav-underline" className="absolute -bottom-1 left-0 right-0 h-px bg-dlw-red shadow-dlw-red" />
+              ) : null}
             </Link>
           ))}
         </nav>
 
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="hidden items-center md:flex">
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/contact">Private viewing</Link>
-          </Button>
-          <Button size="sm" asChild>
             <Link href={user ? "/dashboard" : "/login"}>{user ? "Garage" : "Sign in"}</Link>
           </Button>
         </div>
@@ -102,17 +102,24 @@ export function SiteHeader() {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-            className="mx-auto mt-3 max-w-6xl overflow-hidden rounded-2xl border border-white/10 bg-black/85 backdrop-blur-xl md:hidden"
+            className="mx-auto mt-3 max-w-6xl overflow-hidden rounded-2xl border border-white/10 bg-dlw-charcoal/95 backdrop-blur-xl md:hidden"
           >
-            <div className="flex flex-col gap-3 p-4">
+            <motion.div className="flex flex-col items-center gap-4 p-6">
+              <BrandTagline size="sm" />
+              <motion.div className="dlw-divider w-full" />
               {links.map((l, i) => (
                 <motion.div
                   key={l.href}
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.04 }}
+                  className="w-full"
                 >
-                  <Link href={l.href} className="text-sm text-white/80" onClick={() => setOpen(false)}>
+                  <Link
+                    href={l.href}
+                    className={cn("block py-2 text-center text-sm uppercase tracking-[0.25em]", pathname === l.href ? "text-dlw-red" : "text-white/80")}
+                    onClick={() => setOpen(false)}
+                  >
                     {l.label}
                   </Link>
                 </motion.div>
@@ -120,7 +127,7 @@ export function SiteHeader() {
               <Link href="/login" className="text-sm text-white" onClick={() => setOpen(false)}>
                 Sign in
               </Link>
-            </div>
+            </motion.div>
           </motion.div>
         ) : null}
       </AnimatePresence>

@@ -71,6 +71,7 @@ export function buildDemoAxiosResponse(
       getDemoCarsListPage({
         search: params?.search != null ? String(params.search) : "",
         sort: (params?.sort as CarListFilters["sort"]) ?? "price_desc",
+        category: (params?.category as CarListFilters["category"]) ?? "ALL",
         brand: params?.brand != null ? String(params.brand) : "",
         fuel: params?.fuel != null ? String(params.fuel) : "",
         transmission: params?.transmission != null ? String(params.transmission) : "",

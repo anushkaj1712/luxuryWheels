@@ -3,16 +3,24 @@
 @tailwind utilities;
 
 /*
-  Global design tokens — matte black luxury palette, metallic accents, glass surfaces.
-  Typography: Inter (UI/body), Poppins (display) loaded in `layout.tsx`.
+  Drive Luxury Wheels — matte black, chrome silver, luxury red, glass surfaces.
 */
 :root {
-  --dlw-bg: #030303;
+  --dlw-black: #030303;
+  --dlw-charcoal: #0a0a0c;
+  --dlw-metal: #141418;
+  --dlw-silver: #c0c0c0;
+  --dlw-red: #ff0000;
+  --dlw-red-glow: rgba(255, 0, 0, 0.4);
+  --dlw-white: #ffffff;
+  --dlw-bg: #08080a;
   --dlw-fg: #f4f4f5;
   --dlw-muted: #a1a1aa;
   --dlw-accent: #e4e4e7;
   --dlw-glow: rgba(255, 255, 255, 0.12);
   --dlw-grid: rgba(255, 255, 255, 0.04);
+  --dlw-glass: rgba(255, 255, 255, 0.04);
+  --dlw-glass-border: rgba(255, 255, 255, 0.1);
 }
 
 @theme inline {
@@ -20,6 +28,7 @@
   --color-foreground: var(--dlw-fg);
   --font-sans: var(--font-inter), ui-sans-serif, system-ui;
   --font-display: var(--font-poppins), ui-sans-serif, system-ui;
+  --font-brand: var(--font-exo), var(--font-poppins), ui-sans-serif, system-ui;
 }
 
 html {
@@ -27,8 +36,10 @@ html {
 }
 
 body {
-  background: radial-gradient(120% 80% at 50% -20%, rgba(255, 255, 255, 0.06), transparent),
-    linear-gradient(180deg, #050505 0%, #020202 40%, #010101 100%);
+  background: var(--dlw-bg);
+  background-image: radial-gradient(120% 80% at 50% -20%, rgba(255, 255, 255, 0.07), transparent),
+    radial-gradient(ellipse 50% 30% at 100% 100%, rgba(255, 0, 0, 0.06), transparent),
+    linear-gradient(180deg, #0c0c0f 0%, #060608 50%, #030303 100%);
   color: var(--dlw-fg);
   font-family: var(--font-sans);
   min-height: 100vh;
@@ -36,14 +47,13 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Subtle film grain overlay (GPU-friendly pseudo noise via CSS) */
 body::before {
   content: "";
   pointer-events: none;
   position: fixed;
   inset: 0;
   z-index: 1;
-  opacity: 0.035;
+  opacity: 0.03;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
@@ -51,12 +61,56 @@ body::before {
   font-family: var(--font-display);
 }
 
+.font-brand {
+  font-family: var(--font-brand);
+  font-style: italic;
+}
+
+/* Premium glass + metal surfaces */
+@layer components {
+  .dlw-glass {
+    @apply border border-white/10 bg-white/[0.04] backdrop-blur-xl;
+  }
+
+  .dlw-glass-strong {
+    @apply border border-white/[0.12] bg-gradient-to-b from-white/[0.08] to-white/[0.02] backdrop-blur-2xl;
+  }
+
+  .dlw-card {
+    @apply rounded-2xl border border-white/10 bg-dlw-carbon shadow-dlw-glass;
+    background-color: color-mix(in srgb, var(--dlw-metal) 85%, transparent);
+  }
+
+  .dlw-divider {
+    @apply relative h-px w-full bg-gradient-to-r from-transparent via-white/25 to-transparent;
+  }
+
+  .dlw-divider::after {
+    content: "";
+    @apply absolute left-1/2 top-1/2 h-0.5 w-16 -translate-x-1/2 -translate-y-1/2 bg-dlw-red;
+    box-shadow: 0 0 12px var(--dlw-red-glow);
+  }
+
+  .dlw-btn-luxury {
+    @apply relative overflow-hidden bg-gradient-to-r from-red-600 via-red-500 to-red-600 text-white shadow-dlw-red transition duration-300 hover:-translate-y-0.5;
+  }
+
+  .dlw-btn-luxury:hover {
+    box-shadow: 0 0 50px -6px var(--dlw-red-glow);
+  }
+
+  .dlw-text-gradient {
+    @apply bg-gradient-to-r from-white via-dlw-silver to-white bg-clip-text text-transparent;
+  }
+}
+
 /* Swiper luxury overrides */
 .swiper-pagination-bullet {
   background: rgba(255, 255, 255, 0.35) !important;
 }
 .swiper-pagination-bullet-active {
-  background: #fff !important;
+  background: var(--dlw-red) !important;
+  box-shadow: 0 0 8px var(--dlw-red-glow);
 }
 
 @keyframes dlw-marquee {
@@ -66,7 +120,7 @@ body::before {
 }
 
 .animate-dlw-marquee {
-  animation: dlw-marquee 32s linear infinite;
+  animation: dlw-marquee 40s linear infinite;
 }
 
 @keyframes dlw-shimmer {
@@ -76,12 +130,77 @@ body::before {
 }
 
 .animate-dlw-shimmer {
-  animation: dlw-shimmer 1.8s ease-in-out infinite;
+  animation: dlw-shimmer 2.2s ease-in-out infinite;
+}
+
+@keyframes dlw-tagline-glow {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.12);
+  }
+}
+
+.animate-dlw-tagline-glow {
+  animation: dlw-tagline-glow 3.5s ease-in-out infinite;
+}
+
+.dlw-carousel-nav {
+  @apply flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-gradient-to-br from-white/10 to-black/50 text-white shadow-[0_8px_32px_-12px_rgba(0,0,0,0.8)] backdrop-blur-2xl transition duration-300 will-change-transform;
+}
+
+.dlw-carousel-nav:hover {
+  border-color: rgba(255, 0, 0, 0.45);
+  background-color: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  box-shadow: 0 0 32px -4px var(--dlw-red-glow);
+  transform: translateY(-50%) scale(1.05);
+}
+
+.dlw-filter-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23c0c0c0' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.85rem center;
+  padding-right: 2.25rem;
+}
+
+.dlw-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, var(--dlw-red), rgba(255, 255, 255, 0.15));
+}
+
+.dlw-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 18px;
+  width: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  background: linear-gradient(135deg, #fff, var(--dlw-silver));
+  box-shadow: 0 0 12px var(--dlw-red-glow);
+  cursor: pointer;
+}
+
+.dlw-range::-moz-range-thumb {
+  height: 18px;
+  width: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  background: linear-gradient(135deg, #fff, var(--dlw-silver));
+  box-shadow: 0 0 12px var(--dlw-red-glow);
+  cursor: pointer;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .animate-dlw-marquee,
-  .animate-dlw-shimmer {
+  .animate-dlw-shimmer,
+  .animate-dlw-glow,
+  .animate-dlw-shine,
+  .animate-dlw-tagline-glow {
     animation: none;
   }
 }

@@ -7,8 +7,11 @@ import { X } from "lucide-react";
 import { api } from "@/services/api";
 import { compareIdsParam, useCompareStore, type CompareItem } from "@/store/compare-store";
 import { SafeImage } from "@/components/media/SafeImage";
-import { resolveCarImageUrl } from "@/lib/image-utils";
+import { resolveCarImageUrl, FALLBACK_CAR } from "@/lib/image-utils";
 import { Button } from "@/components/ui/button";
+import { BrandTagline } from "@/components/brand/BrandTagline";
+import { getDemoHorsepower } from "@/lib/demo-data/cars";
+import type { ApiCar } from "@/lib/types/home";
 
 const SPEC_ROWS: { key: keyof CompareItem | "price"; label: string; format?: (c: CompareItem) => string }[] = [
   { key: "price", label: "Price", format: (c) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(c.price) },
@@ -46,8 +49,21 @@ export default function ComparePage() {
       setError(null);
       try {
         const { data } = await api.get("/cars", { params: { ids } });
-        const fresh = (data.data.items ?? []) as CompareItem[];
-        if (!cancelled) setRows(fresh.length ? fresh : items);
+        const fresh = (data.data.items ?? []) as ApiCar[];
+        if (!cancelled) {
+          const merged = items.map((stored) => {
+            const hit = fresh.find((f) => f.id === stored.id);
+            if (!hit) return stored;
+            return {
+              ...stored,
+              ...hit,
+              thumbnail: hit.thumbnail ?? stored.thumbnail,
+              horsepower: hit.horsepower ?? stored.horsepower ?? getDemoHorsepower(hit.id),
+              features: stored.features?.length ? stored.features : [],
+            } satisfies CompareItem;
+          });
+          setRows(merged.length ? merged : items);
+        }
       } catch {
         if (!cancelled) {
           setRows(items);
@@ -65,9 +81,12 @@ export default function ComparePage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-16 md:px-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="font-display text-3xl text-white">
-          Compare atelier
-        </motion.h1>
+        <div>
+          <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="font-brand text-3xl font-bold italic text-white md:text-4xl">
+            Compare atelier
+          </motion.h1>
+          <BrandTagline size="sm" align="left" className="mt-3" />
+        </div>
         {rows.length > 0 ? (
           <button type="button" className="text-xs uppercase tracking-widest text-white/45 hover:text-white" onClick={clear}>
             Clear all
@@ -107,7 +126,7 @@ export default function ComparePage() {
                 </button>
                 <Link href={`/cars/${c.slug}`} className="block">
                   <div className="relative aspect-[16/10]">
-                    <SafeImage src={resolveCarImageUrl(c.thumbnail)} alt={`${c.brand} ${c.model}`} fill className="object-cover" sizes="33vw" />
+                    <SafeImage src={resolveCarImageUrl(c.thumbnail)} alt={`${c.brand} ${c.model}`} fill className="object-cover" sizes="33vw" fallbackSrc={FALLBACK_CAR} />
                   </div>
                   <div className="p-4">
                     <p className="text-xs uppercase tracking-widest text-white/40">{c.brand}</p>
@@ -124,7 +143,7 @@ export default function ComparePage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.15 }}
-            className="mt-12 overflow-x-auto rounded-2xl border border-white/10"
+            className="dlw-glass-strong mt-12 overflow-x-auto rounded-2xl"
           >
             <table className="w-full min-w-[640px] text-left text-sm">
               <thead>

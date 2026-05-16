@@ -22,7 +22,7 @@ export function CompareBar() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 24 }}
           transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-          className="fixed inset-x-4 bottom-4 z-[70] mx-auto max-w-3xl rounded-2xl border border-white/15 bg-black/85 p-3 shadow-[0_24px_80px_-24px_rgba(0,0,0,0.9)] backdrop-blur-xl md:inset-x-8"
+          className="fixed inset-x-4 bottom-4 z-[70] mx-auto max-w-3xl rounded-2xl border border-dlw-red/25 bg-dlw-charcoal/95 p-3 shadow-dlw-red backdrop-blur-xl md:inset-x-8"
           role="region"
           aria-label="Compare vehicles"
         >

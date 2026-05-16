@@ -2,6 +2,9 @@
 
 export type BlogPreview = { slug: string; title: string; excerpt?: string };
 
+/** Inventory condition — demo + future Prisma `listingCondition`. */
+export type ListingCondition = "NEW" | "USED" | "DEMO";
+
 export type ApiCar = {
   id: string;
   slug: string;
@@ -13,4 +16,6 @@ export type ApiCar = {
   fuel: string;
   transmission: string;
   thumbnail: string | null;
+  listingCondition?: ListingCondition;
+  horsepower?: number | null;
 };
